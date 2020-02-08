@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Validator = require('jsonschema').Validator;
 const redis = require('redis');
 const client = redis.createClient({
     port: 16981,
@@ -7,88 +8,49 @@ const client = redis.createClient({
     password: 'Change@001'
 });
 
-const Product = require('../models/product');
+const v = new Validator();
+
+const Product = require('../models/product.js');
 
 client.on('connect', function () {
     console.log('redis connected');
 });
 
-router.get('/', (req, res, next) => {
-    Product.find()
-    .exec()
-    .then( docs => {
-        console.log(docs);
-        res.status(200).json(docs);
-    })
-    .catch( err => {
-        console.log(err);
-        res.status(500).json({
-            error: err
-        });
-    })
-});
-
 router.post('/', (req, res, next) => {
-    client.set("name", req.body.name, redis.print)
-    client.get('name', function(error, result) {
-        if (error) throw error;
-        console.log('Get result->' + result)
-    });
-    console.log(req.body.name);
+    const data = req.body;
+    const obj1 = data.item3;
+    client.hmset('item3', 'name', obj1['name'], 'price', obj1['price']);
+    res.status(200).json({
+        message: "Add new key to Redis!" 
+    })
 });
 
-router.get('/:productId', (req, res, next) => {
-    const id = req.params.prodcutId;
-    Product.findById(id)
-        .exec()
-        .then(doc => {
-            console.log('From database', doc);
-            if (doc) {
-                res.status(200).json(doc);
-            } else {
-                res.status(404).json({message: 'No valid entry found for privided ID'});
-            }
-        })
-        .catch(err => {
-            console.log(err);
-            res.status(500).json({error: err})
-        });
+router.get('/:item', (req, res, next) => {
+    const name = req.params.item;
+    client.hgetall(name, function(err, object) {
+        console.log(object);
+        res.json(object);
+        if (err) {
+            res.json({
+                error: err
+            })
+        }
+    })
     
 });
 
-// change data in the database
-router.patch('/:productId', (req, res, next) => {
-    const id = req.params.prodcutId;
-    const updateOps = {};
-    for (const ops of req.body) {
-        updateOps[ops.propName] = ops.value;
-    }
-    Product.update({ _id: id}, {$set: updateOps })
-    .exec()
-    .then( result => {
-        console.log(result);
-        res.status(200).json(result);
-    })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json({
-            error: err
-        });
-    });
-});
-
-router.delete('/:productId', (req, res, next) => {
-    const id = req.params.prodcutId;
-    Product.remove({ _id: id})
-    .exec()
-    .then( result => {
-        res.status(200).json(result);
-    })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json({
-            error: err
+router.delete('/:item', (req, res, next) => {
+    const item = req.params.item;
+    client.del(item, function(err, reply) {
+        console.log(reply);
+        res.status(200).json({
+            message: "Delete key " + item + " from redis database!"
         })
+        if (err) {
+            res.status(500).json({
+                error: err
+            })
+        }
     });
 });
 
