@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
+const redis = require('redis');
+const client = redis.createClient({
+    port: 16981,
+    host: 'redis-16981.c16.us-east-1-3.ec2.cloud.redislabs.com',
+    password: 'Change@001'
+});
 
 const Product = require('../models/product');
+
+client.on('connect', function () {
+    console.log('redis connected');
+});
 
 router.get('/', (req, res, next) => {
     Product.find()
@@ -20,26 +29,12 @@ router.get('/', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-    const product = new Product({
-        _id: new mongoose.Types.ObjectId(),
-        name: req.body.name,
-        price: req.body.price
+    client.set("name", req.body.name, redis.print)
+    client.get('name', function(error, result) {
+        if (error) throw error;
+        console.log('Get result->' + result)
     });
-    product
-        .save()
-        .then(result => {
-            console.log(result);
-            res.status(200).json({
-                message:'Post requests to /products',
-                createdProduct: result
-            });
-        })
-        .catch(err => {
-            console.log(err);
-            res.status(500).json({
-                error: err
-            });
-        });
+    console.log(req.body.name);
 });
 
 router.get('/:productId', (req, res, next) => {
