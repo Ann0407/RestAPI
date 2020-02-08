@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Validator = require('jsonschema').Validator;
+const Validate = require('jsonschema').Validator;
 const redis = require('redis');
 const client = redis.createClient({
     port: 16981,
@@ -8,18 +8,17 @@ const client = redis.createClient({
     password: 'Change@001'
 });
 
-const v = new Validator();
-
 const Product = require('../models/product.js');
-
+const v = new Validate();
 client.on('connect', function () {
     console.log('redis connected');
 });
 
 router.post('/', (req, res, next) => {
     const data = req.body;
-    const obj1 = data.item3;
-    client.hmset('item3', 'name', obj1['name'], 'price', obj1['price']);
+    console.log(v.validate(data, Product));
+    const obj1 = data.itme6;
+    client.hmset('itme6', 'name', obj1['name'], 'price', obj1['price']);
     res.status(200).json({
         message: "Add new key to Redis!" 
     })
