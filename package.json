@@ -15,7 +15,7 @@
     "jsonschema": "^1.2.5",
     "mongoose": "^5.8.11",
     "morgan": "^1.9.1",
-    "nconf": "^0.10.0",
+    "nconf": "^0.11.4",
     "redis": "^2.8.0"
   },
   "devDependencies": {
